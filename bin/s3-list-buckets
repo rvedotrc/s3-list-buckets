@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+require 's3-list-buckets'
+
+config = S3ListBuckets::Config.new
+
+opts_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: s3-list-buckets [OPTIONS] [PATTERN ...]"
+  opts.separator ""
+  opts.on("-l", "--location", "Show the location") do
+    config.show_location = true
+  end
+  opts.on("-j", "--json", "Show output in json format") do
+    config.json_format = true
+  end
+  opts.separator ""
+  opts.separator <<-EOF
+If one or more PATTERNs are given, a bucket is only shown if the bucket name
+matches at least one PATTERN (each of which is implicitly prefixed by "^", the
+start-of-string pattern).
+
+Examples:
+
+  # Show all your buckets (just bucket names):
+  s3-list-buckets
+
+  # Show buckets, prefixed by the location constraint
+  s3-list-buckets --location
+
+  # Show names and location constraints of buckets whose names start with "a"
+  # or "b", as json:
+  s3-list-buckets --location --json a b
+
+  EOF
+end
+
+opts_parser.parse!
+
+unless ARGV.empty?
+  config.patterns = ARGV
+end
+
+config.validate
+
+rc = S3ListBuckets::Runner.new(config).run
+exit rc
+
+# eof s3-list-buckets
